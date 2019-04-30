@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"golang.org/x/sync/semaphore"
 	"log"
@@ -15,17 +14,7 @@ import (
 type scannable []string
 
 func main() {
-	// Load them up.
-	f, err := os.Open("cidr_to_scan.json")
-	if err != nil {
-		log.Fatalf("could not open file to read CIDRs: %v", err)
-	}
-
-	// Parse.
-	var cidrs scannable
-	if err := json.NewDecoder(f).Decode(&cidrs); err != nil {
-		log.Fatalf("could not read from file: %v", err)
-	}
+	cidrs := genPool()
 	log.Printf("About to scan (%v) CIDRs, or (%v) IPs...", len(cidrs), len(cidrs)*254)
 
 	// Don't clog the system,
@@ -50,6 +39,13 @@ func main() {
 
 		log.Println("---------------------------------------------------------")
 		log.Printf("Finished scanning (%v) IP addresses in (%v).", len(targets), time.Since(ts))
+		if foundTargets.len() > 0 {
+			log.Println("---- [RESULTS] ----")
+			for k := range foundTargets.retrieve() {
+				fmt.Println(k)
+			}
+			log.Println("---- [END] ----")
+		}
 		log.Println("---------------------------------------------------------")
 	}
 
