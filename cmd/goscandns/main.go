@@ -33,10 +33,11 @@ func main() {
 	maxScan := ulimit() / 2
 	sem := semaphore.NewWeighted(int64(maxScan))
 	foundTargets := newRegistry()
-	ts := time.Now()
+	now := time.Now()
 
 	// Fire.
 	for _, targetCIDR := range cidrs {
+		ts := time.Now()
 		targets, err := hostsFromCIDR(targetCIDR)
 		if err != nil {
 			log.Fatalf("could not retrieve IP pool: %v", err)
@@ -48,14 +49,18 @@ func main() {
 		processTargets(sem, targets, foundTargets)
 
 		log.Println("---------------------------------------------------------")
-		log.Printf("Finished scanning (%v) IP addresses in (%v) and found (%v) possible candidates.", len(targets), time.Since(ts), foundTargets.len())
+		log.Printf("Finished scanning (%v) IP addresses in (%v).", len(targets), time.Since(ts))
 		log.Println("---------------------------------------------------------")
 	}
 
+	log.Println("---------------------------------------------------------")
+	log.Printf("DONE: (%v) IP addresses in (%v) and found (%v) possible candidates.", len(cidrs)*254, time.Since(now), foundTargets.len())
+	log.Println("---------------------------------------------------------")
+
 	if foundTargets.len() > 0 {
 		log.Println("---- [RESULTS] ----")
-		for k, v := range foundTargets.retrieve() {
-			fmt.Println(k, v)
+		for k := range foundTargets.retrieve() {
+			fmt.Println(k)
 		}
 		log.Println("---- [END] ----")
 	}
